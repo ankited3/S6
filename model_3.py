@@ -6,64 +6,71 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 
-# class Net(nn.Module):
-#     #This defines the structure of the NN.
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
-#         self.bn1   = nn.BatchNorm2d(16)
+# Train Phase transformations
+train_transforms = transforms.Compose([
+                                       transforms.RandomApply([transforms.CenterCrop(22), ], p=0.05),
+                                       transforms.Resize((28, 28)),
+                                       transforms.RandomRotation((-8., 8.), fill=1),
+                                      #  transforms.ColorJitter(brightness=0.10, contrast=0.1, saturation=0.10, hue=0.1),
+                                       transforms.ToTensor(),
+                                       transforms.Normalize((0.1307,), (0.3081,)) # The mean and std have to be sequences (e.g., tuples), therefore you should add a comma after the values.
+                                       # Note the difference between (0.1307) and (0.1307,)
+                                       ])
 
-#         self.conv2 = nn.Conv2d(16, 16, kernel_size=3, padding=1)
-#         self.bn2   = nn.BatchNorm2d(16)
+# Test Phase transformations
+test_transforms = transforms.Compose([
+                                      #  transforms.Resize((28, 28)),
+                                      #  transforms.ColorJitter(brightness=0.10, contrast=0.1, saturation=0.10, hue=0.1),
+                                       transforms.ToTensor(),
+                                       transforms.Normalize((0.1307,), (0.3081,))
+                                       ])
 
-#         self.conv3 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
-#         self.bn3   = nn.BatchNorm2d(32)
+"""# Dataset and Creating Train/Test Split"""
 
-#         self.conv4 = nn.Conv2d(32, 16, kernel_size=1)
-#         self.bn4   = nn.BatchNorm2d(16)
+train = datasets.MNIST('./data', train=True, download=True, transform=train_transforms)
+test = datasets.MNIST('./data', train=False, download=True, transform=test_transforms)
 
-#         self.conv5 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
-#         self.bn5   = nn.BatchNorm2d(32)
+"""# Dataloader Arguments & Test/Train Dataloaders
 
-#         self.conv6 = nn.Conv2d(32, 16, kernel_size=1)
-#         self.bn6   = nn.BatchNorm2d(16)
+"""
 
-#         self.conv7 = nn.Conv2d(16, 16, kernel_size=3)
-#         self.bn7   = nn.BatchNorm2d(16)
+SEED = 1
 
-#         # Fully connected layer
-#         self.fc1 = nn.Linear(400, 10)
+# CUDA?
+cuda = torch.cuda.is_available()
+print("CUDA Available?", cuda)
 
-#         # Dropout layers
-#         self.dropout1 = nn.Dropout(0.05)   # 5% dropout
+# For reproducibility
+torch.manual_seed(SEED)
+
+if cuda:
+    torch.cuda.manual_seed(SEED)
+
+# dataloader arguments - something you'll fetch these from cmdprmt
+dataloader_args = dict(shuffle=True, batch_size=128, num_workers=4, pin_memory=True) if cuda else dict(shuffle=True, batch_size=64)
+
+# train dataloader
+train_loader = torch.utils.data.DataLoader(train, **dataloader_args)
+
+# test dataloader
+test_loader = torch.utils.data.DataLoader(test, **dataloader_args)
+
+"""# Data Statistics
+
+It is important to know your data very well. Let's check some of the statistics around our data and how it actually looks like
+"""
 
 
-#     def forward(self, x):
-#         x = F.relu(self.bn1(self.conv1(x)))
-#         x = self.dropout1(x)
-#         x = F.relu(self.bn2(self.conv2(x)))
-#         x = self.dropout1(x)
-#         x = F.relu(self.bn3(self.conv3(x)))
-#         x = self.dropout1(x)
-#         x = F.max_pool2d(x, 2)   # pooling after activation
+"""## MORE
 
-#         x = F.relu(self.conv4(x))
-#         x = F.relu(self.bn5(self.conv5(x)))
-#         x = self.dropout1(x)
-#         x = F.max_pool2d(x, 2)
+It is important that we view as many images as possible. This is required to get some idea on image augmentation later on
+"""
 
-#         x = F.relu(self.bn6(self.conv6(x)))
 
-#         x = F.relu(self.bn7(self.conv7(x)))
-#         x = self.dropout1(x)
 
-#         x = x.view(-1, 400)   # flatten
-
-#         x = self.dropout1(x)
-#         x = self.fc1(x)
-
-#         return F.log_softmax(x, dim=1)
-
+"""# The model
+Let's start with the model we first saw
+"""
 
 import torch.nn.functional as F
 dropout_value = 0.02
@@ -155,50 +162,6 @@ device = torch.device("cuda" if use_cuda else "cpu")
 model = Net().to(device)
 summary(model, input_size=(1, 28, 28))
 
-torch.manual_seed(1)
-batch_size = 128
-
-kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=True, download=True,
-                    transform=transforms.Compose([
-                        transforms.RandomApply([transforms.CenterCrop(22), ], p=0.05),
-                        transforms.Resize((28, 28)),
-                        transforms.RandomRotation((-8., 8.), fill=1),
-                        #transforms.RandomAffine(0, translate=(0.1, 0.1)),
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ])),
-    batch_size=batch_size, shuffle=True, **kwargs)
-test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=False, transform=transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ])),
-    batch_size=batch_size, shuffle=True, **kwargs)
-
-images, labels = next(iter(train_loader))
-import matplotlib.pyplot as plt
-
-# Commented out IPython magic to ensure Python compatibility.
-figure = plt.figure()
-num_of_images = 60
-for index in range(1, num_of_images + 1):
-    plt.subplot(6, 10, index)
-    plt.axis('off')
-    plt.imshow(images[index].numpy().squeeze(), cmap='gray_r')
-
-print(images.shape)
-print(labels.shape)
-
-# Let's visualize some of the images
-# %matplotlib inline
-import matplotlib.pyplot as plt
-
-plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
-
-print(len(test_loader))
-print(len(train_loader))
 
 # Data to plot accuracy and loss graphs
 train_losses = []
@@ -266,7 +229,8 @@ criterion = nn.CrossEntropyLoss()
 
 EPOCH=15
 for epoch in range(EPOCH):
-    print(f'Model 3 Epoch {epoch}')
+    print("Model 3 EPOCH:", epoch)
     train(model, device, train_loader, optimizer, epoch, criterion)
-    test(model, device, test_loader,criterion)
     scheduler.step()
+    test(model, device, test_loader,criterion)
+    

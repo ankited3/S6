@@ -55,7 +55,7 @@ if cuda:
     torch.cuda.manual_seed(SEED)
 
 # dataloader arguments - something you'll fetch these from cmdprmt
-dataloader_args = dict(shuffle=True, batch_size=128, num_workers=4, pin_memory=True) if cuda else dict(shuffle=True, batch_size=64)
+dataloader_args = dict(shuffle=True, batch_size=128, num_workers=4, pin_memory=True) if cuda else dict(shuffle=True, batch_size=128)
 
 # train dataloader
 train_loader = torch.utils.data.DataLoader(train, **dataloader_args)
@@ -73,38 +73,38 @@ It is important to know your data very well. Let's check some of the statistics 
 train_data = train.train_data
 train_data = train.transform(train_data.numpy())
 
-print('[Train]')
-print(' - Numpy Shape:', train.train_data.cpu().numpy().shape)
-print(' - Tensor Shape:', train.train_data.size())
-print(' - min:', torch.min(train_data))
-print(' - max:', torch.max(train_data))
-print(' - mean:', torch.mean(train_data))
-print(' - std:', torch.std(train_data))
-print(' - var:', torch.var(train_data))
+# print('[Train]')
+# print(' - Numpy Shape:', train.train_data.cpu().numpy().shape)
+# print(' - Tensor Shape:', train.train_data.size())
+# print(' - min:', torch.min(train_data))
+# print(' - max:', torch.max(train_data))
+# print(' - mean:', torch.mean(train_data))
+# print(' - std:', torch.std(train_data))
+# print(' - var:', torch.var(train_data))
 
-dataiter = iter(train_loader)
-images, labels = next(iter(train_loader))
+# dataiter = iter(train_loader)
+# images, labels = next(iter(train_loader))
 
-print(images.shape)
-print(labels.shape)
+# print(images.shape)
+# print(labels.shape)
 
 # Let's visualize some of the images
 # %matplotlib inline
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
+# plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
 
 """## MORE
 
 It is important that we view as many images as possible. This is required to get some idea on image augmentation later on
 """
 
-figure = plt.figure()
-num_of_images = 60
-for index in range(1, num_of_images + 1):
-    plt.subplot(6, 10, index)
-    plt.axis('off')
-    plt.imshow(images[index].numpy().squeeze(), cmap='gray_r')
+# figure = plt.figure()
+# num_of_images = 60
+# for index in range(1, num_of_images + 1):
+#     plt.subplot(6, 10, index)
+#     plt.axis('off')
+#     plt.imshow(images[index].numpy().squeeze(), cmap='gray_r')
 
 """# The model
 Let's start with the model we first saw
@@ -279,7 +279,7 @@ def test(model, device, test_loader):
 
 model =  Net().to(device)
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-EPOCHS = 2
+EPOCHS = 15
 for epoch in range(EPOCHS):
     print("Model 2 EPOCH:", epoch)
     train(model, device, train_loader, optimizer, epoch)
@@ -287,15 +287,15 @@ for epoch in range(EPOCHS):
 
 
 # Commented out IPython magic to ensure Python compatibility.
-t = [t_items.item() for t_items in train_losses]
-# %matplotlib inline
-import matplotlib.pyplot as plt
-fig, axs = plt.subplots(2,2,figsize=(15,10))
-axs[0, 0].plot(t)
-axs[0, 0].set_title("Training Loss")
-axs[1, 0].plot(train_acc[4000:])
-axs[1, 0].set_title("Training Accuracy")
-axs[0, 1].plot(test_losses)
-axs[0, 1].set_title("Test Loss")
-axs[1, 1].plot(test_acc)
-axs[1, 1].set_title("Test Accuracy")
+# t = [t_items.item() for t_items in train_losses]
+# # %matplotlib inline
+# import matplotlib.pyplot as plt
+# fig, axs = plt.subplots(2,2,figsize=(15,10))
+# axs[0, 0].plot(t)
+# axs[0, 0].set_title("Training Loss")
+# axs[1, 0].plot(train_acc[4000:])
+# axs[1, 0].set_title("Training Accuracy")
+# axs[0, 1].plot(test_losses)
+# axs[0, 1].set_title("Test Loss")
+# axs[1, 1].plot(test_acc)
+# axs[1, 1].set_title("Test Accuracy")

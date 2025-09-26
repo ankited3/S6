@@ -223,7 +223,7 @@ def test(model, device, test_loader,criterion):
     return test_accuracy
 
 model = Net().to(device)
-optimizer = optim.Adam(model.parameters(), lr=0.02)
+optimizer = optim.Adam(model.parameters(), lr=0.0)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.1)
 criterion = nn.CrossEntropyLoss()
 
